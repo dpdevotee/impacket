@@ -13,6 +13,10 @@ from __future__ import print_function
 from struct import pack, unpack, calcsize
 from six import b, PY3
 
+
+STUB_FOR_UNREADABLE_STRING = '????'
+
+
 class Structure:
     """ sublcasses can define commonHdr and/or structure.
         each of them is an tuple of either two: (fieldName, format) or three: (fieldName, ':', class) fields.
