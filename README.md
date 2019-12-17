@@ -1,3 +1,5 @@
+This is patched version of impacket. impacket.structure was patched not to raise exception on unreadable strings.
+
 What is Impacket?
 =================
 

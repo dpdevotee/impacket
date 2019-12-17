@@ -4,6 +4,10 @@
 # of the Apache Software License. See the accompanying LICENSE file
 # for more information.
 #
+# This is a patched version of impacket.structure.
+# Method unpack of class Structure was patched to not raise Exception while trying
+# to unpack unreadable string. Instead, in that case it returns string '????'.
+#
 from __future__ import division
 from __future__ import print_function
 from struct import pack, unpack, calcsize
@@ -286,9 +290,9 @@ class Structure:
         # struct like specifier
         return pack(format, data)
 
-    def unpack(self, format, data, dataClassOrCode = b, field = None):
+    def unpack(self, format, data, dataClassOrCode=b, field=None):
         if self.debug:
-            print("  unpack( %s | %r )" %  (format, data))
+            print("  unpack( %s | %r )" % (format, data))
 
         if field:
             addressField = self.findAddressFieldFor(field)
@@ -299,7 +303,7 @@ class Structure:
         # void specifier
         if format[:1] == '_':
             if dataClassOrCode != b:
-                fields = {'self':self, 'inputDataLeft':data}
+                fields = {'self': self, 'inputDataLeft': data}
                 fields.update(self.fields)
                 return eval(dataClassOrCode, {}, fields)
             else:
@@ -309,23 +313,24 @@ class Structure:
         if format[:1] == "'" or format[:1] == '"':
             answer = format[1:]
             if b(answer) != data:
-                raise Exception("Unpacked data doesn't match constant value '%r' should be '%r'" % (data, answer))
+                # raise Exception("Unpacked data doesn't match constant value '%r' should be '%r'" % (data, answer))
+                return STUB_FOR_UNREADABLE_STRING
             return answer
 
         # address specifier
         two = format.split('&')
         if len(two) == 2:
-            return self.unpack(two[0],data)
+            return self.unpack(two[0], data)
 
         # code specifier
         two = format.split('=')
         if len(two) >= 2:
-            return self.unpack(two[0],data)
+            return self.unpack(two[0], data)
 
         # length specifier
         two = format.split('-')
         if len(two) == 2:
-            return self.unpack(two[0],data)
+            return self.unpack(two[0], data)
 
         # array specifier
         two = format.split('*')
@@ -341,7 +346,7 @@ class Structure:
                 number = -1
 
             while number and sofar < len(data):
-                nsofar = sofar + self.calcUnpackSize(two[1],data[sofar:])
+                nsofar = sofar + self.calcUnpackSize(two[1], data[sofar:])
                 answer.append(self.unpack(two[1], data[sofar:nsofar], dataClassOrCode))
                 number -= 1
                 sofar = nsofar
@@ -355,7 +360,8 @@ class Structure:
         # asciiz specifier
         if format == 'z':
             if data[-1:] != b('\x00'):
-                raise Exception("%s 'z' field is not NUL terminated: %r" % (field, data))
+                # raise Exception("%s 'z' field is not NUL terminated: %r" % (field, data))
+                return STUB_FOR_UNREADABLE_STRING
             if PY3:
                 return data[:-1].decode('latin-1')
             else:
@@ -364,13 +370,14 @@ class Structure:
         # unicode specifier
         if format == 'u':
             if data[-2:] != b('\x00\x00'):
-                raise Exception("%s 'u' field is not NUL-NUL terminated: %r" % (field, data))
-            return data[:-2] # remove trailing NUL
+                # raise Exception("%s 'u' field is not NUL-NUL terminated: %r" % (field, data))
+                return STUB_FOR_UNREADABLE_STRING
+            return data[:-2]  # remove trailing NUL
 
         # DCE-RPC/NDR string specifier
         if format == 'w':
             l = unpack('<L', data[:4])[0]
-            return data[12:12+l*2]
+            return data[12:12 + l * 2]
 
         # literal specifier
         if format == ':':
