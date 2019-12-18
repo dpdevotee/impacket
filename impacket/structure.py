@@ -14,7 +14,7 @@ from struct import pack, unpack, calcsize
 from six import b, PY3
 
 
-STUB_FOR_UNREADABLE_STRING = '????'
+STUB_FOR_UNREADABLE_STRING = b'????'
 
 
 class Structure:
